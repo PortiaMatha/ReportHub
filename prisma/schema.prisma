@@ -1,0 +1,195 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Client {
+  id              String    @id @default(cuid())
+  name            String
+  domain          String    @unique
+  ga4PropertyId   String?
+  semrushProjectId String?
+  clickupListId   String?
+  githubRepo      String?
+  color           String    @default("#534AB7")
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  reports         Report[]
+  snapshots       DomainSnapshot[]
+  kpis            Kpi[]
+  comments        Comment[]
+}
+
+model Kpi {
+  id                String   @id @default(cuid())
+  clientId          String
+  client            Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  section           String
+  name              String
+  owner             String?
+  yearGoal          String?
+  unit              String?
+  measurementType   String   @default("cumulative") // "cumulative" | "rate" | "snapshot" | "duration"
+  direction         String   @default("higher")      // "higher" | "lower" | "range" | "informational"
+  denominatorLabel  String?  // label for the 2nd weekly number on rate/duration KPIs, e.g. "Reach", "Sessions"
+  goalMethod        String   @default("manual")       // "manual" | "baseline_avg" | "growth"
+  goalBaseline      Float?
+  goalGrowthPercent Float?
+  pacingMethod      String   @default("straight_line") // "straight_line" | "weekly_plan" (cumulative only)
+  rangeLow          Float?
+  rangeHigh         Float?
+  source            String?  // "ga4" | "semrush" | "pagespeed" | "clickup" — null means manual entry only
+  metricKey         String?
+  order             Int      @default(0)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  weeklyValues      KpiWeekValue[]
+}
+
+model KpiWeekValue {
+  id               String   @id @default(cuid())
+  kpiId            String
+  kpi              Kpi      @relation(fields: [kpiId], references: [id], onDelete: Cascade)
+  weekStart        DateTime
+  value            Float?
+  denominatorValue Float?
+  plannedTarget    Float?
+  commentary       String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@unique([kpiId, weekStart])
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  clientId  String
+  client    Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  author    String?
+  text      String
+  date      DateTime @default(now())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Report {
+  id          String    @id @default(cuid())
+  clientId    String
+  client      Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  month       Int
+  year        Int
+  status      String    @default("draft")
+
+  // GA4
+  sessions          Int?
+  sessionsDelta     Float?
+  totalUsers        Int?
+  totalUsersDelta   Float?
+  newUsers          Int?
+  newUsersDelta     Float?
+  avgSessionDuration String?
+  bounceRate        Float?
+  bounceRateDelta   Float?
+  topPages          String?   // JSON array
+  dailySessions     String?   // JSON array
+
+  // PageSpeed
+  desktopPerf       Int?
+  desktopAccess     Int?
+  desktopBestPrac   Int?
+  desktopSeo        Int?
+  mobilePerf        Int?
+  mobileAccess      Int?
+  mobileBestPrac    Int?
+  mobileSeo         Int?
+  fcpDesktop        String?
+  lcpDesktop        String?
+  tbtDesktop        String?
+  clsDesktop        String?
+  speedIndexDesktop String?
+  fcpMobile         String?
+  lcpMobile         String?
+  tbtMobile         String?
+  clsMobile         String?
+  speedIndexMobile  String?
+  pagespeedCrux          String?   // JSON { desktop: CruxData, mobile: CruxData }
+  pagespeedOpportunities String?   // JSON array of detected Lighthouse issues
+  pagespeedAiSummary     String?
+  pagespeedAiIssues      String?   // JSON array
+
+  // SEMrush
+  siteHealth        Int?
+  errors            Int?
+  warnings          Int?
+  crawlability      Int?
+  httpsScore        Int?
+  sitePerformance   Int?
+  internalLinking   Int?
+  markup            Int?
+  auditIssues       String?   // JSON array
+  organicKeywords   Int?
+  organicTraffic    Int?
+
+  // ClickUp
+  openTasks         Int?
+  completedTasks    Int?
+  inProgressTasks   Int?
+  tasks                    String?   // JSON array
+  clickupStatusBreakdown   String?   // JSON array
+
+  // GitHub
+  githubBranch            String?
+  githubLastCommit        String?
+  githubLastCommitMsg     String?
+  githubLastCommitDate    String?
+  githubCommitsThisMonth  Int?
+  githubOpenPRs           Int?
+  githubMergedPRs         Int?
+  githubOpenIssues        Int?
+  githubStars             Int?
+  githubReleases          String?   // JSON array
+  githubCommits           String?   // JSON array
+
+  // Domain snapshot diff
+  domainChanges     String?   // JSON array of changes vs prev month
+
+  // AI Summary
+  aiSummary         String?
+  aiRecommendations String?   // JSON array
+
+  // Security
+  sslExpiry         String?
+  malwareStatus     String?
+  firewallStatus    String?
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([clientId, month, year])
+}
+
+model DomainSnapshot {
+  id            String    @id @default(cuid())
+  clientId      String
+  client        Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  month         Int
+  year          Int
+  shopifyVersion String?
+  theme          String?
+  themeVersion   String?
+  hasOutdatedApps Boolean?
+  githubBranch   String?
+  githubCommit   String?
+  sslExpiry      String?
+  sslIssuer      String?
+  cms            String?
+  techStack      String?   // JSON array
+  headers        String?   // JSON snapshot of key HTTP headers
+  createdAt      DateTime  @default(now())
+
+  @@unique([clientId, month, year])
+}
