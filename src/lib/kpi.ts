@@ -3,6 +3,31 @@ import type { Kpi, KpiWeekValue, KpiDirection, KpiStatus } from '@/types'
 const WEEKS_PER_YEAR = 52
 const DAY_MS = 24 * 60 * 60 * 1000
 
+// A client's YTD reporting period doesn't have to follow the calendar year (e.g. a client whose
+// year runs Mar 26 – Feb 27). Dates are plain "YYYY-MM-DD" strings, inclusive on both ends.
+export interface KpiPeriod {
+  start: string
+  end: string
+}
+
+export function defaultYtdPeriod(): KpiPeriod {
+  const year = new Date().getFullYear()
+  return { start: `${year}-01-01`, end: `${year}-12-31` }
+}
+
+export function formatPeriodLabel(period: KpiPeriod): string {
+  const start = new Date(period.start)
+  const end = new Date(period.end)
+  const startLabel = start.toLocaleDateString('en', { timeZone: 'UTC', month: 'short', day: 'numeric', year: 'numeric' })
+  const endLabel = end.toLocaleDateString('en', { timeZone: 'UTC', month: 'short', day: 'numeric', year: 'numeric' })
+  return `${startLabel} – ${endLabel}`
+}
+
+export function isWeekInPeriod(weekStart: string, period: KpiPeriod): boolean {
+  const t = new Date(weekStart).getTime()
+  return t >= new Date(period.start).getTime() && t <= new Date(period.end).getTime()
+}
+
 export function parseNumeric(value?: string | null): number | null {
   if (!value) return null
   const cleaned = value.replace(/[^0-9.-]/g, '')
@@ -47,6 +72,10 @@ function weeksInMonth(kpi: Kpi, year: number, month: number): KpiWeekValue[] {
   })
 }
 
+function weeksInPeriod(kpi: Kpi, period: KpiPeriod): KpiWeekValue[] {
+  return kpi.weeklyValues.filter(w => isWeekInPeriod(w.weekStart, period))
+}
+
 // Reduces a set of logged weeks to a single figure per the KPI's measurement type.
 function aggregateWeeks(kpi: Kpi, weeks: KpiWeekValue[]): number | null {
   const logged = weeks.filter(isLogged)
@@ -71,58 +100,63 @@ function aggregateWeeks(kpi: Kpi, weeks: KpiWeekValue[]): number | null {
   return kpi.measurementType === 'rate' && kpi.unit === '%' ? ratio * 100 : ratio
 }
 
-export function computeYtdActual(kpi: Kpi, year: number = new Date().getFullYear()): number | null {
-  return aggregateWeeks(kpi, weeksInYear(kpi, year))
+export function computeYtdActual(kpi: Kpi, period: KpiPeriod = defaultYtdPeriod()): number | null {
+  return aggregateWeeks(kpi, weeksInPeriod(kpi, period))
 }
 
 // Used by goal methods that need a specific month's total (e.g. Jan/Dec baseline average).
+// Always calendar-based — the baseline-average goal method compares Jan vs Dec of a calendar year
+// regardless of the client's custom YTD reporting period.
 export function computeMonthTotal(kpi: Kpi, year: number, month: number): number | null {
   return aggregateWeeks(kpi, weeksInMonth(kpi, year, month))
 }
 
-// A past year is treated as fully elapsed; the current year's reporting date is today.
-export function getReportingDate(year: number): Date {
+// A period that's already ended is treated as fully elapsed; one that hasn't started yet as 0% elapsed.
+export function getReportingDate(period: KpiPeriod = defaultYtdPeriod()): Date {
   const now = new Date()
   const todayUTC = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()))
-  if (year === now.getFullYear()) return todayUTC
-  if (year < now.getFullYear()) return new Date(Date.UTC(year, 11, 31))
-  return new Date(Date.UTC(year, 0, 1))
+  const start = new Date(period.start)
+  const end = new Date(period.end)
+  if (todayUTC.getTime() < start.getTime()) return start
+  if (todayUTC.getTime() > end.getTime()) return end
+  return todayUTC
 }
 
-function daysInYear(year: number): number {
-  const isLeap = (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0
-  return isLeap ? 366 : 365
+function periodLengthDays(period: KpiPeriod): number {
+  const start = new Date(period.start)
+  const end = new Date(period.end)
+  return Math.round((end.getTime() - start.getTime()) / DAY_MS) + 1
 }
 
-function dayOfYear(date: Date): number {
-  const start = Date.UTC(date.getUTCFullYear(), 0, 1)
-  return Math.floor((date.getTime() - start) / DAY_MS) + 1
+function dayIntoPeriod(date: Date, period: KpiPeriod): number {
+  const start = new Date(period.start)
+  return Math.floor((date.getTime() - start.getTime()) / DAY_MS) + 1
 }
 
-function weeksRemainingInYear(year: number, reportingDate: Date): number {
+function weeksRemainingInPeriod(period: KpiPeriod, reportingDate: Date): number {
   const currentWeekStart = new Date(snapToWeekStartISO(reportingDate.toISOString().slice(0, 10)))
-  const lastWeekStart = new Date(snapToWeekStartISO(`${year}-12-31`))
+  const lastWeekStart = new Date(snapToWeekStartISO(period.end))
   const diffWeeks = Math.round((lastWeekStart.getTime() - currentWeekStart.getTime()) / (7 * DAY_MS))
   return Math.max(0, diffWeeks)
 }
 
 // Expected YTD — only cumulative KPIs get pro-rated; rate/snapshot/duration compare Actual straight against the goal.
-export function computeExpectedYtd(kpi: Kpi, year: number = new Date().getFullYear()): number | null {
+export function computeExpectedYtd(kpi: Kpi, period: KpiPeriod = defaultYtdPeriod()): number | null {
   const goal = parseNumeric(kpi.yearGoal)
   if (goal === null) return null
   if (kpi.measurementType !== 'cumulative') return goal
 
-  const reportingDate = getReportingDate(year)
+  const reportingDate = getReportingDate(period)
 
   if (kpi.pacingMethod === 'weekly_plan') {
-    const planned = weeksInYear(kpi, year)
+    const planned = weeksInPeriod(kpi, period)
       .filter(w => new Date(w.weekStart).getTime() <= reportingDate.getTime())
       .filter(w => w.plannedTarget !== null && w.plannedTarget !== undefined)
     if (planned.length === 0) return null
     return planned.reduce((sum, w) => sum + (w.plannedTarget as number), 0)
   }
 
-  return (goal * dayOfYear(reportingDate)) / daysInYear(year)
+  return (goal * dayIntoPeriod(reportingDate, period)) / periodLengthDays(period)
 }
 
 export interface OverUnderResult {
@@ -131,12 +165,12 @@ export interface OverUnderResult {
 }
 
 // Sign convention: positive always means "ahead of target", negative always means "behind" — regardless of direction.
-export function computeOverUnder(kpi: Kpi, year: number = new Date().getFullYear()): OverUnderResult {
+export function computeOverUnder(kpi: Kpi, period: KpiPeriod = defaultYtdPeriod()): OverUnderResult {
   if (kpi.direction === 'range' || kpi.direction === 'informational') {
     return { overUnder: null, variancePercent: null }
   }
-  const actual = computeYtdActual(kpi, year)
-  const expected = computeExpectedYtd(kpi, year)
+  const actual = computeYtdActual(kpi, period)
+  const expected = computeExpectedYtd(kpi, period)
   if (actual === null || expected === null) return { overUnder: null, variancePercent: null }
 
   const rawDelta = actual - expected
@@ -151,17 +185,17 @@ export interface DynamicWeeklyResult {
   dynamic: number | null
 }
 
-export function computeDynamicWeekly(kpi: Kpi, year: number = new Date().getFullYear()): DynamicWeeklyResult {
+export function computeDynamicWeekly(kpi: Kpi, period: KpiPeriod = defaultYtdPeriod()): DynamicWeeklyResult {
   if (kpi.direction === 'range' || kpi.direction === 'informational') return { original: null, dynamic: null }
   const goal = parseNumeric(kpi.yearGoal)
   if (goal === null) return { original: null, dynamic: null }
 
   if (kpi.measurementType !== 'cumulative') return { original: goal, dynamic: goal }
 
-  const actual = computeYtdActual(kpi, year) ?? 0
-  const reportingDate = getReportingDate(year)
+  const actual = computeYtdActual(kpi, period) ?? 0
+  const reportingDate = getReportingDate(period)
   const remaining = Math.max(0, goal - actual)
-  const weeksRemaining = weeksRemainingInYear(year, reportingDate)
+  const weeksRemaining = weeksRemainingInPeriod(period, reportingDate)
   const dynamic = weeksRemaining > 0 ? remaining / weeksRemaining : 0
   const original = goal / WEEKS_PER_YEAR
   return { original, dynamic }
@@ -221,9 +255,9 @@ export function computeWeeklyResult(kpi: Kpi, week: KpiWeekValue): WeeklyResult 
 }
 
 // Progress bar / at-a-glance percent — direction-aware, clamped 0-100.
-export function computeProgressPercent(kpi: Kpi, year: number = new Date().getFullYear()): number | null {
+export function computeProgressPercent(kpi: Kpi, period: KpiPeriod = defaultYtdPeriod()): number | null {
   if (kpi.direction === 'range' || kpi.direction === 'informational') return null
-  const actual = computeYtdActual(kpi, year)
+  const actual = computeYtdActual(kpi, period)
   const goal = parseNumeric(kpi.yearGoal)
   const ratio = computeAchievementRatio(actual, goal, kpi.direction)
   if (ratio === null) return null
@@ -246,7 +280,7 @@ export function computeGoalFromBaselineAvg(kpi: Kpi, baselineYear: number): Goal
 
 // Year Goal = Previous Year Actual × (1 + Growth %)
 export function computeGoalFromGrowth(kpi: Kpi, baselineYear: number, growthPercent: number): GoalComputation | null {
-  const baseline = computeYtdActual(kpi, baselineYear)
+  const baseline = computeYtdActual(kpi, { start: `${baselineYear}-01-01`, end: `${baselineYear}-12-31` })
   if (baseline === null) return null
   return { baseline, yearGoal: baseline * (1 + growthPercent / 100) }
 }

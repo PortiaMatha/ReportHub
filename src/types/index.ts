@@ -19,6 +19,8 @@ export interface Client {
   clickupListId?: string
   githubRepo?: string
   color: string
+  ytdStart?: string | null
+  ytdEnd?: string | null
   createdAt: string
   updatedAt: string
   reports?: ClientLatestReport[]

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { Plus, Pencil, Trash2, X, ChevronDown, ArrowUp, ArrowDown, RefreshCw, Globe, Search, Share2, Star, Megaphone, Users, Mail, MessageCircle } from 'lucide-react'
+import { Plus, Pencil, Trash2, X, ChevronDown, ArrowUp, ArrowDown, RefreshCw, Globe, Search, Share2, Star, Megaphone, Users, Mail, MessageCircle, Calendar } from 'lucide-react'
 import type {
   Client, Kpi, KpiSection, KpiMeasurementType, KpiDirection, KpiGoalMethod, KpiPacingMethod,
   KpiSource, KpiStatus, KpiWeekValue,
@@ -10,6 +10,7 @@ import {
   computeYtdActual, computeExpectedYtd, computeOverUnder, computeDynamicWeekly, computeProgressPercent,
   computeWeeklyResult, formatDurationSeconds, parseDurationToSeconds, parseNumeric,
   lastCompletedWeekStartISO, formatWeekRange,
+  type KpiPeriod, defaultYtdPeriod, formatPeriodLabel, isWeekInPeriod,
 } from '@/lib/kpi'
 import { KPI_PRESETS, SOURCE_LABELS } from '@/lib/kpiPresets'
 import CommentsSection from './CommentsSection'
@@ -219,9 +220,9 @@ function WeekRow({ kpi, week, onDeleteWeek, onUpdateWeek }: {
 
 // ─── Weekly log + table panel ──────────────────────────────────────────────────
 
-function WeeklyPanel({ kpi, year, onLogWeek, onDeleteWeek, onSyncWeek, onUpdateWeek }: {
+function WeeklyPanel({ kpi, period, onLogWeek, onDeleteWeek, onSyncWeek, onUpdateWeek }: {
   kpi: Kpi
-  year: number
+  period: KpiPeriod
   onLogWeek: (weekStart: string, fields: WeekLogFields) => Promise<void>
   onDeleteWeek: (weekId: string) => Promise<void>
   onSyncWeek: (weekStart: string) => Promise<void>
@@ -243,7 +244,7 @@ function WeeklyPanel({ kpi, year, onLogWeek, onDeleteWeek, onSyncWeek, onUpdateW
   const showPlanned = kpi.measurementType === 'cumulative' && kpi.pacingMethod === 'weekly_plan'
 
   const weeks = [...kpi.weeklyValues]
-    .filter(w => new Date(w.weekStart).getUTCFullYear() === year)
+    .filter(w => isWeekInPeriod(w.weekStart, period))
     .sort((a, b) => new Date(a.weekStart).getTime() - new Date(b.weekStart).getTime())
 
   const handleAdd = async () => {
@@ -353,7 +354,7 @@ function WeeklyPanel({ kpi, year, onLogWeek, onDeleteWeek, onSyncWeek, onUpdateW
       {addError && <p className="text-[11px] text-red-400 mb-2">{addError}</p>}
 
       {weeks.length === 0 ? (
-        <p className="text-xs text-slate-500">No weekly values logged for {year} yet.</p>
+        <p className="text-xs text-slate-500">No weekly values logged for {formatPeriodLabel(period)} yet.</p>
       ) : (
         <div className="max-h-56 overflow-y-auto">
           <div className={`grid ${isDualEntry ? DUAL_ROW_COLS : SINGLE_ROW_COLS} gap-2 text-[10px] text-slate-500 uppercase tracking-wide px-1.5 mb-1`}>
@@ -376,17 +377,17 @@ function WeeklyPanel({ kpi, year, onLogWeek, onDeleteWeek, onSyncWeek, onUpdateW
 
 // ─── Pipeline summary strip ────────────────────────────────────────────────────
 
-function PipelineStrip({ kpi, year }: { kpi: Kpi; year: number }) {
+function PipelineStrip({ kpi, period }: { kpi: Kpi; period: KpiPeriod }) {
   const goal = parseNumeric(kpi.yearGoal)
-  const actual = computeYtdActual(kpi, year)
-  const expected = computeExpectedYtd(kpi, year)
-  const { overUnder, variancePercent } = computeOverUnder(kpi, year)
-  const { original, dynamic } = computeDynamicWeekly(kpi, year)
+  const actual = computeYtdActual(kpi, period)
+  const expected = computeExpectedYtd(kpi, period)
+  const { overUnder, variancePercent } = computeOverUnder(kpi, period)
+  const { original, dynamic } = computeDynamicWeekly(kpi, period)
 
   return (
     <div className="grid grid-cols-5 gap-2 mb-2">
       <PipelineStat label="Year Goal" value={formatValue(goal, kpi)} />
-      <PipelineStat label={`YTD Actual ${year}`} value={formatValue(actual, kpi)} />
+      <PipelineStat label={`YTD Actual ${formatPeriodLabel(period)}`} value={formatValue(actual, kpi)} />
       <PipelineStat label="Expected by Today" value={formatValue(expected, kpi)} />
       <div className="bg-white/[0.03] rounded-lg px-2.5 py-2">
         <div className="text-[10px] text-slate-500 uppercase tracking-wide mb-0.5">Over / Under</div>
@@ -421,9 +422,9 @@ function PipelineStat({ label, value }: { label: string; value: string }) {
 
 // ─── KPI row ────────────────────────────────────────────────────────────────────
 
-function KpiRow({ kpi, year, isFirst, isLast, onEdit, onDelete, onMove, onLogWeek, onDeleteWeek, onSyncWeek, onUpdateWeek }: {
+function KpiRow({ kpi, period, isFirst, isLast, onEdit, onDelete, onMove, onLogWeek, onDeleteWeek, onSyncWeek, onUpdateWeek }: {
   kpi: Kpi
-  year: number
+  period: KpiPeriod
   isFirst: boolean
   isLast: boolean
   onEdit: () => void
@@ -435,10 +436,10 @@ function KpiRow({ kpi, year, isFirst, isLast, onEdit, onDelete, onMove, onLogWee
   onUpdateWeek: (weekId: string, patch: WeekPatch) => Promise<void>
 }) {
   const [expanded, setExpanded] = useState(false)
-  const ytd = computeYtdActual(kpi, year)
+  const ytd = computeYtdActual(kpi, period)
   const goal = parseNumeric(kpi.yearGoal)
-  const { overUnder } = computeOverUnder(kpi, year)
-  const pct = computeProgressPercent(kpi, year)
+  const { overUnder } = computeOverUnder(kpi, period)
+  const pct = computeProgressPercent(kpi, period)
 
   return (
     <div className="py-3 border-t border-white/[0.05] first:border-t-0 group">
@@ -453,7 +454,7 @@ function KpiRow({ kpi, year, isFirst, isLast, onEdit, onDelete, onMove, onLogWee
           </div>
           <div className="flex items-center gap-3 mt-1 text-xs text-slate-500 ml-[18px]">
             <span>Goal: <span className="text-slate-300">{goal !== null ? formatValue(goal, kpi) : '—'}</span></span>
-            <span>YTD {year}: <span className="text-slate-300">{formatValue(ytd, kpi)}</span></span>
+            <span>YTD {formatPeriodLabel(period)}: <span className="text-slate-300">{formatValue(ytd, kpi)}</span></span>
             {overUnder !== null && (
               <span className={overUnder >= 0 ? 'text-emerald-400' : 'text-amber-400'}>
                 {overUnder >= 0 ? '+' : ''}{formatValue(overUnder, kpi)}
@@ -487,8 +488,8 @@ function KpiRow({ kpi, year, isFirst, isLast, onEdit, onDelete, onMove, onLogWee
 
       {expanded && (
         <div>
-          <PipelineStrip kpi={kpi} year={year} />
-          <WeeklyPanel kpi={kpi} year={year} onLogWeek={onLogWeek} onDeleteWeek={onDeleteWeek} onSyncWeek={onSyncWeek} onUpdateWeek={onUpdateWeek} />
+          <PipelineStrip kpi={kpi} period={period} />
+          <WeeklyPanel kpi={kpi} period={period} onLogWeek={onLogWeek} onDeleteWeek={onDeleteWeek} onSyncWeek={onSyncWeek} onUpdateWeek={onUpdateWeek} />
         </div>
       )}
     </div>
@@ -742,6 +743,102 @@ function SelectField({ label, value, onChange, options }: { label: string; value
   )
 }
 
+// ─── YTD period picker ─────────────────────────────────────────────────────────
+
+function YtdPeriodPicker({ period, onSave }: { period: KpiPeriod; onSave: (next: KpiPeriod) => Promise<void> }) {
+  const [open, setOpen] = useState(false)
+  const [start, setStart] = useState(period.start)
+  const [end, setEnd] = useState(period.end)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+  const popoverRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    setStart(period.start)
+    setEnd(period.end)
+    setError('')
+  }, [open, period])
+
+  useEffect(() => {
+    if (!open) return
+    const handleClickOutside = (e: MouseEvent) => {
+      if (popoverRef.current && !popoverRef.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [open])
+
+  const handleSave = async () => {
+    if (!start || !end) { setError('Pick both a start and end date'); return }
+    if (new Date(start).getTime() >= new Date(end).getTime()) { setError('End date must be after start date'); return }
+    setSaving(true)
+    setError('')
+    try {
+      await onSave({ start, end })
+      setOpen(false)
+    } catch {
+      setError('Could not save YTD period')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className="relative" ref={popoverRef}>
+      <button
+        onClick={() => setOpen(v => !v)}
+        className="flex items-center gap-2 text-sm bg-[#1c2232] border border-white/10 rounded-lg px-3 py-1.5 text-white hover:border-white/20 transition-colors"
+      >
+        <Calendar className="w-3.5 h-3.5 text-purple-400" />
+        {formatPeriodLabel(period)}
+      </button>
+
+      {open && (
+        <div className="absolute right-0 mt-2 w-72 bg-[#1c2232] border border-white/[0.08] rounded-xl shadow-2xl p-4 z-20">
+          <p className="text-xs font-medium text-slate-400 mb-3">YTD period</p>
+          <div className="space-y-3">
+            <div>
+              <label className="block text-[11px] text-slate-500 mb-1">Start date</label>
+              <input
+                type="date"
+                value={start}
+                onChange={e => setStart(e.target.value)}
+                className="w-full bg-white/[0.04] border border-white/10 rounded-lg px-2.5 py-1.5 text-sm text-white focus:outline-none focus:border-purple-500/50 transition-colors"
+              />
+            </div>
+            <div>
+              <label className="block text-[11px] text-slate-500 mb-1">End date</label>
+              <input
+                type="date"
+                value={end}
+                onChange={e => setEnd(e.target.value)}
+                className="w-full bg-white/[0.04] border border-white/10 rounded-lg px-2.5 py-1.5 text-sm text-white focus:outline-none focus:border-purple-500/50 transition-colors"
+              />
+            </div>
+          </div>
+          {error && <p className="text-[11px] text-red-400 mt-2">{error}</p>}
+          <div className="flex gap-2 mt-4">
+            <button
+              onClick={() => setOpen(false)}
+              className="flex-1 px-3 py-1.5 text-xs border border-white/10 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="flex-1 px-3 py-1.5 text-xs text-white rounded-lg font-medium disabled:opacity-50 transition-colors bg-purple-600 hover:bg-purple-700"
+            >
+              {saving ? 'Saving…' : 'Save'}
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ─── Root ───────────────────────────────────────────────────────────────────────
 
 export default function KpiView({ client }: Props) {
@@ -750,14 +847,20 @@ export default function KpiView({ client }: Props) {
   const [kpisLoading, setKpisLoading] = useState(false)
   const [modalSection, setModalSection] = useState<KpiSection | null>(null)
   const [editingKpi, setEditingKpi] = useState<Kpi | null>(null)
-  const [year, setYear] = useState<number>(() => new Date().getFullYear())
+  const [period, setPeriod] = useState<KpiPeriod>(() =>
+    client.ytdStart && client.ytdEnd
+      ? { start: client.ytdStart.slice(0, 10), end: client.ytdEnd.slice(0, 10) }
+      : defaultYtdPeriod()
+  )
 
-  const yearOptions = (() => {
-    const current = new Date().getFullYear()
-    const loggedYears = kpis.flatMap(k => k.weeklyValues.map(w => new Date(w.weekStart).getUTCFullYear()))
-    const years = new Set([current, 2025, ...loggedYears])
-    return Array.from(years).sort((a, b) => b - a)
-  })()
+  // Re-sync the period whenever the selected client changes (each client can have its own YTD range).
+  useEffect(() => {
+    setPeriod(
+      client.ytdStart && client.ytdEnd
+        ? { start: client.ytdStart.slice(0, 10), end: client.ytdEnd.slice(0, 10) }
+        : defaultYtdPeriod()
+    )
+  }, [clientId, client.ytdStart, client.ytdEnd])
 
   // Only show the loading skeleton on the very first load for a client — every mutation
   // (log a week, sync, move, edit) also calls loadKpis, and swapping to the skeleton on
@@ -889,16 +992,19 @@ export default function KpiView({ client }: Props) {
     await loadKpis(clientId)
   }
 
+  const handleSavePeriod = async (next: KpiPeriod) => {
+    await fetch(`/api/clients/${clientId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ytdStart: next.start, ytdEnd: next.end }),
+    })
+    setPeriod(next)
+  }
+
   return (
     <div>
       <div className="flex items-center justify-end mb-4">
-        <select
-          value={year}
-          onChange={e => setYear(Number(e.target.value))}
-          className="appearance-none text-sm bg-[#1c2232] border border-white/10 rounded-lg px-3 py-1.5 text-white focus:outline-none cursor-pointer"
-        >
-          {yearOptions.map(y => <option key={y} value={y}>{y}</option>)}
-        </select>
+        <YtdPeriodPicker period={period} onSave={handleSavePeriod} />
       </div>
       {kpisLoading ? (
         <div className="grid grid-cols-2 gap-4">
@@ -932,7 +1038,7 @@ export default function KpiView({ client }: Props) {
                       <KpiRow
                         key={kpi.id}
                         kpi={kpi}
-                        year={year}
+                        period={period}
                         isFirst={i === 0}
                         isLast={i === sectionKpis.length - 1}
                         onEdit={() => openEdit(kpi)}
