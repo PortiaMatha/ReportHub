@@ -2,6 +2,8 @@
 
 A Next.js app that generates monthly performance reports by pulling live data from GA4, PageSpeed Insights, SEMrush, and ClickUp, with domain change tracking and AI-powered summaries.
 
+You add a client once (domain + the relevant IDs from GA4/SEMrush/ClickUp/GitHub), hit **Sync**, and the app pulls that month's data, diffs it against last month, and writes an AI summary you can hand straight to the client as a PDF or Word doc.
+
 ---
 
 ## Features
@@ -13,17 +15,30 @@ A Next.js app that generates monthly performance reports by pulling live data fr
 - **ClickUp** — open/completed tasks with live status
 - **Domain crawler** — detects Shopify version, theme, tech stack, SSL, and diffs changes month-over-month
 - **AI Summary** — Claude writes a plain-English summary + prioritised recommendations
-- **PDF Export** — one-click PDF using Puppeteer
+- **KPI tracking** — weekly/cumulative KPIs per client with goals and pacing
+- **Export** — one-click PDF (Puppeteer) or Word doc
+
+> **Note:** the Login/Register screens are UI only right now — there's no real authentication yet, so anyone with access to the running app reaches the dashboard directly. Don't expose a deployment publicly without adding auth first.
 
 ---
 
-## Quick Start
+## Requirements
+
+- [Node.js](https://nodejs.org/) 18.18+ (Next.js 15 requirement)
+- npm (comes with Node)
+- Git
+
+Everything else (database, integrations) is configured through `.env` — no external services are required just to run the app, but reports will show empty/zero data for any integration you haven't configured.
+
+---
+
+## Installation
 
 ### 1. Clone & install
 
 ```bash
-git clone <your-repo>
-cd report-hub
+git clone https://github.com/PortiaMatha/ReportHub.git
+cd ReportHub
 npm install
 ```
 
@@ -33,31 +48,49 @@ npm install
 cp .env.example .env
 ```
 
-Fill in `.env`:
+Open `.env` and fill in the keys you plan to use — you don't need all of them to get started, but each one you skip means that integration returns no data:
 
-| Variable | Where to get it |
-|---|---|
-| `GA4_CLIENT_EMAIL` | Google Cloud Console → IAM → Service Accounts |
-| `GA4_PRIVATE_KEY` | Same service account JSON key |
-| `PAGESPEED_API_KEY` | [Google Developers Console](https://developers.google.com/speed/docs/insights/v5/get-started) |
-| `SEMRUSH_API_KEY` | [SEMrush API Analytics](https://www.semrush.com/api-analytics/) |
-| `CLICKUP_API_TOKEN` | ClickUp → Settings → Apps |
-| `ANTHROPIC_API_KEY` | [Anthropic Console](https://console.anthropic.com) |
+| Variable | Where to get it | Required for |
+|---|---|---|
+| `DATABASE_URL` | Leave as `file:./dev.db` for local use | App to start |
+| `GA4_CLIENT_EMAIL` | Google Cloud Console → IAM → Service Accounts | GA4 stats |
+| `GA4_PRIVATE_KEY` | Same service account JSON key | GA4 stats |
+| `PAGESPEED_API_KEY` | [Google Developers Console](https://developers.google.com/speed/docs/insights/v5/get-started) | PageSpeed scores |
+| `SEMRUSH_API_KEY` | [SEMrush API Analytics](https://www.semrush.com/api-analytics/) | SEMrush data |
+| `CLICKUP_API_TOKEN` | ClickUp → Settings → Apps | ClickUp tasks |
+| `ANTHROPIC_API_KEY` | [Anthropic Console](https://console.anthropic.com) | AI summaries |
+| `NEXT_PUBLIC_APP_URL` | `http://localhost:3000` for local dev | PDF/doc export |
 
-### 3. Set up database
+See the "Setting up ..." sections below for step-by-step instructions per integration.
+
+### 3. Set up the database
+
+This creates a local SQLite database (`prisma/dev.db`) from the schema:
 
 ```bash
 npm run db:push
 npm run db:generate
 ```
 
-### 4. Run dev server
+### 4. Run the app
 
 ```bash
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000)
+Open [http://localhost:3000](http://localhost:3000) — you'll land on the dashboard directly.
+
+---
+
+## Using the app
+
+1. **Add a client** — go to the **Clients** tab → **Add Client** → enter their name and domain, plus whichever integration IDs you have (GA4 Property ID, SEMrush Project ID, ClickUp List ID, GitHub repo). Any field can be left blank and filled in later.
+2. **Sync data** — select the client, go to the **Reports** tab, and click **Sync**. This pulls fresh data from every configured integration for the current month in parallel and stores it as a report.
+3. **Review the report** — GA4, PageSpeed, SEMrush, ClickUp, and domain-change data appear as report sections with month-over-month deltas.
+4. **Generate the AI summary** — click **Regenerate Summary** on the report to have Claude write a plain-English overview plus 4-6 prioritised recommendations. You can regenerate it any time.
+5. **Track KPIs** — the **Overview**/KPI views let you define weekly or cumulative KPIs per client (e.g. traffic, leads) with goals and pacing, tracked independently of the monthly sync.
+6. **Export** — from the report view, export the finished report as a **PDF** or **Word doc** to send to the client.
+7. **Manage integrations** — the **Integrations** tab shows connection status per source and is where you diagnose a failed sync (each source fails independently, so one bad API key won't block the rest of the report).
 
 ---
 
