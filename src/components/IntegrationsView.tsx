@@ -94,8 +94,8 @@ const integrations: Integration[] = [
     badgeType: 'apikey',
     badgeLabel: 'API token',
     getClientStatus: (c) => ({
-      active: !!c.sproutProfileId,
-      detail: c.sproutProfileId ? `Profile: ${c.sproutProfileId}` : undefined,
+      active: !!c.sproutProfileIds?.length,
+      detail: c.sproutProfileIds?.length ? `${c.sproutProfileIds.length} profile${c.sproutProfileIds.length !== 1 ? 's' : ''}` : undefined,
     }),
   },
 ]

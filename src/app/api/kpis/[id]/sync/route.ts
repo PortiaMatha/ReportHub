@@ -58,12 +58,13 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       const data = await fetchClickUpTasks(client.clickupListId)
       value = (data as unknown as Record<string, number>)[kpi.metricKey] ?? null
     } else if (kpi.source === 'sproutsocial') {
-      if (!client.sproutProfileId) throw new Error('No Sprout Social profile configured for this client')
+      const profileIds: string[] = client.sproutProfileIds ? JSON.parse(client.sproutProfileIds) : []
+      if (profileIds.length === 0) throw new Error('No Sprout Social profiles configured for this client')
       const start = new Date(weekStart)
       const end = new Date(start)
       end.setUTCDate(start.getUTCDate() + 6)
       const iso = (d: Date) => d.toISOString().slice(0, 10)
-      const data = await fetchSproutWeeklyMetrics(client.sproutProfileId, iso(start), iso(end))
+      const data = await fetchSproutWeeklyMetrics(profileIds, iso(start), iso(end))
 
       if (kpi.metricKey === 'engagementRate' && kpi.measurementType === 'rate') {
         // Reach-weighted rate — numerator/denominator entangled the same way GA4's bounceRate is.

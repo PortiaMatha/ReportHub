@@ -11,7 +11,10 @@ export async function GET(_: NextRequest, { params }: { params: Promise<{ id: st
     },
   })
   if (!client) return NextResponse.json({ error: 'Not found' }, { status: 404 })
-  return NextResponse.json(client)
+  return NextResponse.json({
+    ...client,
+    sproutProfileIds: client.sproutProfileIds ? JSON.parse(client.sproutProfileIds) : [],
+  })
 }
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -26,12 +29,17 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       semrushProjectId: body.semrushProjectId,
       clickupListId: body.clickupListId,
       githubRepo: body.githubRepo,
-      sproutProfileId: body.sproutProfileId,
+      sproutProfileIds: body.sproutProfileIds !== undefined
+        ? (body.sproutProfileIds?.length ? JSON.stringify(body.sproutProfileIds) : null)
+        : undefined,
       ytdStart: body.ytdStart !== undefined ? (body.ytdStart ? new Date(body.ytdStart) : null) : undefined,
       ytdEnd: body.ytdEnd !== undefined ? (body.ytdEnd ? new Date(body.ytdEnd) : null) : undefined,
     },
   })
-  return NextResponse.json(client)
+  return NextResponse.json({
+    ...client,
+    sproutProfileIds: client.sproutProfileIds ? JSON.parse(client.sproutProfileIds) : [],
+  })
 }
 
 export async function DELETE(_: NextRequest, { params }: { params: Promise<{ id: string }> }) {

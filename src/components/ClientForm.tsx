@@ -18,7 +18,7 @@ export default function ClientForm({ client, onSave, onClose }: Props) {
     semrushProjectId: client?.semrushProjectId || '',
     clickupListId: client?.clickupListId || '',
     githubRepo: client?.githubRepo || '',
-    sproutProfileId: client?.sproutProfileId || '',
+    sproutProfileIds: client?.sproutProfileIds?.join(', ') || '',
   })
   const [saving, setSaving] = useState(false)
   const [deleting, setDeleting] = useState(false)
@@ -46,12 +46,13 @@ export default function ClientForm({ client, onSave, onClose }: Props) {
     setError('')
     try {
       const cleanDomain = form.domain.replace(/^https?:\/\//, '').replace(/\/+$/, '')
+      const sproutProfileIds = form.sproutProfileIds.split(',').map(s => s.trim()).filter(Boolean)
       const url = client ? `/api/clients/${client.id}` : '/api/clients'
       const method = client ? 'PATCH' : 'POST'
       const res = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, domain: cleanDomain }),
+        body: JSON.stringify({ ...form, domain: cleanDomain, sproutProfileIds }),
       })
       if (!res.ok) throw new Error('Failed to save')
       onSave()
@@ -83,7 +84,7 @@ export default function ClientForm({ client, onSave, onClose }: Props) {
               <Field label="SEMrush Project ID" value={form.semrushProjectId} onChange={(v) => setForm(f => ({...f, semrushProjectId: v}))} placeholder="project-id" />
               <Field label="ClickUp List ID" value={form.clickupListId} onChange={(v) => setForm(f => ({...f, clickupListId: v}))} placeholder="901234567" />
               <Field label="GitHub Repo" value={form.githubRepo} onChange={(v) => setForm(f => ({...f, githubRepo: v}))} placeholder="owner/repo" />
-              <Field label="Sprout Social Profile ID" value={form.sproutProfileId} onChange={(v) => setForm(f => ({...f, sproutProfileId: v}))} placeholder="1234567" />
+              <Field label="Sprout Social Profile IDs (comma-separated)" value={form.sproutProfileIds} onChange={(v) => setForm(f => ({...f, sproutProfileIds: v}))} placeholder="6125162, 6125163, 6125164" />
             </div>
           </div>
 

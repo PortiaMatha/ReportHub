@@ -22,7 +22,10 @@ export async function GET() {
       },
     },
   })
-  return NextResponse.json(clients)
+  return NextResponse.json(clients.map(c => ({
+    ...c,
+    sproutProfileIds: c.sproutProfileIds ? JSON.parse(c.sproutProfileIds) : [],
+  })))
 }
 
 export async function POST(req: NextRequest) {
@@ -35,7 +38,7 @@ export async function POST(req: NextRequest) {
       semrushProjectId: body.semrushProjectId || null,
       clickupListId: body.clickupListId || null,
       githubRepo: body.githubRepo || null,
-      sproutProfileId: body.sproutProfileId || null,
+      sproutProfileIds: body.sproutProfileIds?.length ? JSON.stringify(body.sproutProfileIds) : null,
     },
   })
   return NextResponse.json(client, { status: 201 })

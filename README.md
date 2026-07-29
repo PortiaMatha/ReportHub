@@ -139,7 +139,8 @@ Requires the **Advanced** Sprout plan (or higher) with the **API Permissions** e
 
 1. In Sprout: your name → **Account and settings** → **API** (under Global Features) → **Generate API Token** → copy it into `SPROUT_API_TOKEN`
 2. Get your account-level customer ID with `GET https://api.sproutsocial.com/v1/metadata/client` (using that same token) → paste into `SPROUT_CUSTOMER_ID`
-3. Per client, add their **Sprout Profile ID** (`customer_profile_id` for that social account) in the client's edit form — this feeds the **Social** and **Influencer Management** KPI sections
+3. List every profile connected to your Sprout account with `GET https://api.sproutsocial.com/v1/<customer ID>/metadata/customer` — each entry has a `customer_profile_id`, `network_type`, and `name`
+4. Per client, add every one of their **Sprout Profile IDs** (comma-separated — Facebook, Instagram, LinkedIn, TikTok, etc.) in the client's edit form. Metrics are summed across all of them, so a client's "Social" numbers reflect their whole social presence, not just one platform.
 
 Powers: Engagement Rate, Follower Growth, Impressions, Views, Saves, Shares (Social) and Engagement Rate, Reach, Impressions (Influencer Management). Sprout's public API doesn't expose paid/ad-account data, so **Paid Media** KPIs (CPC, CTR, ROAS, spend) aren't available through this integration — those would need to come from Meta/Google/TikTok Ads APIs directly.
 

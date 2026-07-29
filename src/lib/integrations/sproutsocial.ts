@@ -13,16 +13,19 @@ interface SproutProfileRow {
   metrics: Record<string, number>
 }
 
-export async function fetchSproutWeeklyMetrics(profileId: string, startDate: string, endDate: string) {
+// Sums metrics across every profile passed in — combining multiple platforms (Facebook, Instagram,
+// LinkedIn, etc.) into one figure per client, rather than reporting on a single channel.
+export async function fetchSproutWeeklyMetrics(profileIds: string[], startDate: string, endDate: string) {
   const customerId = process.env.SPROUT_CUSTOMER_ID
   const token = process.env.SPROUT_API_TOKEN
   if (!customerId || !token) throw new Error('Sprout Social is not configured')
+  if (profileIds.length === 0) throw new Error('No Sprout Social profiles configured for this client')
 
   const response = await axios.post(
     `${SPROUT_API}/${customerId}/analytics/profiles`,
     {
       filters: [
-        `customer_profile_id.eq(${profileId})`,
+        `customer_profile_id.eq(${profileIds.join(',')})`,
         `reporting_period.in(${startDate}...${endDate})`,
       ],
       metrics: METRICS,

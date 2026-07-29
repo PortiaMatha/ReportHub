@@ -18,7 +18,7 @@ export interface Client {
   semrushProjectId?: string
   clickupListId?: string
   githubRepo?: string
-  sproutProfileId?: string
+  sproutProfileIds?: string[]
   ytdStart?: string | null
   ytdEnd?: string | null
   createdAt: string

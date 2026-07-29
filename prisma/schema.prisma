@@ -15,7 +15,7 @@ model Client {
   semrushProjectId String?
   clickupListId   String?
   githubRepo      String?
-  sproutProfileId String?
+  sproutProfileIds String?   // JSON array of Sprout customer_profile_id values, combined across platforms
   ytdStart        DateTime?
   ytdEnd          DateTime?
   createdAt       DateTime  @default(now())
