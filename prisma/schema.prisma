@@ -15,6 +15,7 @@ model Client {
   semrushProjectId String?
   clickupListId   String?
   githubRepo      String?
+  sproutProfileId String?
   ytdStart        DateTime?
   ytdEnd          DateTime?
   createdAt       DateTime  @default(now())

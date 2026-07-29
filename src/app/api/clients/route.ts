@@ -35,6 +35,7 @@ export async function POST(req: NextRequest) {
       semrushProjectId: body.semrushProjectId || null,
       clickupListId: body.clickupListId || null,
       githubRepo: body.githubRepo || null,
+      sproutProfileId: body.sproutProfileId || null,
     },
   })
   return NextResponse.json(client, { status: 201 })

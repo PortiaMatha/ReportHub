@@ -18,6 +18,7 @@ export interface Client {
   semrushProjectId?: string
   clickupListId?: string
   githubRepo?: string
+  sproutProfileId?: string
   ytdStart?: string | null
   ytdEnd?: string | null
   createdAt: string
@@ -39,7 +40,7 @@ export type KpiMeasurementType = 'cumulative' | 'rate' | 'snapshot' | 'duration'
 export type KpiDirection = 'higher' | 'lower' | 'range' | 'informational'
 export type KpiGoalMethod = 'manual' | 'baseline_avg' | 'growth'
 export type KpiPacingMethod = 'straight_line' | 'weekly_plan'
-export type KpiSource = 'ga4' | 'semrush' | 'pagespeed' | 'clickup'
+export type KpiSource = 'ga4' | 'semrush' | 'pagespeed' | 'clickup' | 'sproutsocial'
 export type KpiStatus = 'green' | 'orange' | 'red'
 
 export interface KpiWeekValue {

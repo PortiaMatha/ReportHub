@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { BarChart2, Zap, Search, CheckSquare, Globe, Settings, ExternalLink, CheckCircle, XCircle } from 'lucide-react'
+import { BarChart2, Zap, Search, CheckSquare, Globe, Settings, ExternalLink, CheckCircle, XCircle, Share2 } from 'lucide-react'
 import type { Client } from '@/types'
 
 interface Props {
@@ -31,7 +31,7 @@ function FaviconOrDot({ domain }: { domain: string }) {
 }
 
 interface Integration {
-  id: 'ga4' | 'pagespeed' | 'semrush' | 'clickup'
+  id: 'ga4' | 'pagespeed' | 'semrush' | 'clickup' | 'sproutsocial'
   name: string
   description: string
   icon: React.ReactNode
@@ -84,6 +84,18 @@ const integrations: Integration[] = [
     getClientStatus: (c) => ({
       active: !!c.clickupListId,
       detail: c.clickupListId ? `List: ${c.clickupListId}` : undefined,
+    }),
+  },
+  {
+    id: 'sproutsocial',
+    name: 'Sprout Social',
+    description: 'Impressions, engagement, reach, and follower growth for Social and Influencer Management KPIs.',
+    icon: <Share2 className="w-5 h-5" />,
+    badgeType: 'apikey',
+    badgeLabel: 'API token',
+    getClientStatus: (c) => ({
+      active: !!c.sproutProfileId,
+      detail: c.sproutProfileId ? `Profile: ${c.sproutProfileId}` : undefined,
     }),
   },
 ]

@@ -1,8 +1,8 @@
 # ReportHub — Automated Monthly Client Reports
 
-A Next.js app that generates monthly performance reports by pulling live data from GA4, PageSpeed Insights, SEMrush, and ClickUp, with domain change tracking and AI-powered summaries.
+A Next.js app that generates monthly performance reports by pulling live data from GA4, PageSpeed Insights, SEMrush, ClickUp, and Sprout Social, with domain change tracking and AI-powered summaries.
 
-You add a client once (domain + the relevant IDs from GA4/SEMrush/ClickUp/GitHub), hit **Sync**, and the app pulls that month's data, diffs it against last month, and writes an AI summary you can hand straight to the client as a PDF or Word doc.
+You add a client once (domain + the relevant IDs from GA4/SEMrush/ClickUp/GitHub/Sprout Social), hit **Sync**, and the app pulls that month's data, diffs it against last month, and writes an AI summary you can hand straight to the client as a PDF or Word doc.
 
 ---
 
@@ -13,6 +13,7 @@ You add a client once (domain + the relevant IDs from GA4/SEMrush/ClickUp/GitHub
 - **PageSpeed Insights** — desktop + mobile Core Web Vitals scores
 - **SEMrush** — site health, errors, warnings, crawlability, internal linking
 - **ClickUp** — open/completed tasks with live status
+- **Sprout Social** — impressions, engagement, reach, and follower growth for Social/Influencer Management KPIs
 - **Domain crawler** — detects Shopify version, theme, tech stack, SSL, and diffs changes month-over-month
 - **AI Summary** — Claude writes a plain-English summary + prioritised recommendations
 - **KPI tracking** — weekly/cumulative KPIs per client with goals and pacing
@@ -58,6 +59,8 @@ Open `.env` and fill in the keys you plan to use — you don't need all of them 
 | `PAGESPEED_API_KEY` | [Google Developers Console](https://developers.google.com/speed/docs/insights/v5/get-started) | PageSpeed scores |
 | `SEMRUSH_API_KEY` | [SEMrush API Analytics](https://www.semrush.com/api-analytics/) | SEMrush data |
 | `CLICKUP_API_TOKEN` | ClickUp → Settings → Apps | ClickUp tasks |
+| `SPROUT_API_TOKEN` | Sprout Social → Account and settings → API | Social/Influencer KPIs |
+| `SPROUT_CUSTOMER_ID` | `GET https://api.sproutsocial.com/v1/metadata/client` | Social/Influencer KPIs |
 | `ANTHROPIC_API_KEY` | [Anthropic Console](https://console.anthropic.com) | AI summaries |
 | `NEXT_PUBLIC_APP_URL` | `http://localhost:3000` for local dev | PDF/doc export |
 
@@ -84,7 +87,7 @@ Open [http://localhost:3000](http://localhost:3000) — you'll land on the dashb
 
 ## Using the app
 
-1. **Add a client** — go to the **Clients** tab → **Add Client** → enter their name and domain, plus whichever integration IDs you have (GA4 Property ID, SEMrush Project ID, ClickUp List ID, GitHub repo). Any field can be left blank and filled in later.
+1. **Add a client** — go to the **Clients** tab → **Add Client** → enter their name and domain, plus whichever integration IDs you have (GA4 Property ID, SEMrush Project ID, ClickUp List ID, GitHub repo, Sprout Social Profile ID). Any field can be left blank and filled in later.
 2. **Sync data** — select the client, go to the **Reports** tab, and click **Sync**. This pulls fresh data from every configured integration for the current month in parallel and stores it as a report.
 3. **Review the report** — GA4, PageSpeed, SEMrush, ClickUp, and domain-change data appear as report sections with month-over-month deltas.
 4. **Generate the AI summary** — click **Regenerate Summary** on the report to have Claude write a plain-English overview plus 4-6 prioritised recommendations. You can regenerate it any time.
@@ -127,6 +130,20 @@ Free, just needs an API key:
 1. ClickUp → Settings → Apps → **API Token**
 2. Find your List ID: open a list → the number in the URL is the list ID
    `app.clickup.com/12345/v/li/**LIST_ID**`
+
+---
+
+## Setting up Sprout Social
+
+Requires the **Advanced** Sprout plan (or higher) with the **API Permissions** entitlement on your user — ask your Sprout Account Owner to grant it if you don't have it.
+
+1. In Sprout: your name → **Account and settings** → **API** (under Global Features) → **Generate API Token** → copy it into `SPROUT_API_TOKEN`
+2. Get your account-level customer ID with `GET https://api.sproutsocial.com/v1/metadata/client` (using that same token) → paste into `SPROUT_CUSTOMER_ID`
+3. Per client, add their **Sprout Profile ID** (`customer_profile_id` for that social account) in the client's edit form — this feeds the **Social** and **Influencer Management** KPI sections
+
+Powers: Engagement Rate, Follower Growth, Impressions, Views, Saves, Shares (Social) and Engagement Rate, Reach, Impressions (Influencer Management). Sprout's public API doesn't expose paid/ad-account data, so **Paid Media** KPIs (CPC, CTR, ROAS, spend) aren't available through this integration — those would need to come from Meta/Google/TikTok Ads APIs directly.
+
+> Impressions and Engagements are confirmed against Sprout's own API docs; Reach, Follower Growth, Views, Saves, and Shares follow Sprout's documented naming convention but aren't individually confirmed. An unsupported metric name fails the sync with a clear error rather than returning wrong data — if a metric errors, check the field name against a live response from `analytics/profiles` and adjust `src/lib/integrations/sproutsocial.ts`.
 
 ---
 
@@ -188,6 +205,7 @@ src/
 │   │   ├── pagespeed.ts
 │   │   ├── semrush.ts
 │   │   ├── clickup.ts
+│   │   ├── sproutsocial.ts
 │   │   └── domain.ts         # Crawler + diff
 │   ├── ai-summary.ts
 │   └── prisma.ts

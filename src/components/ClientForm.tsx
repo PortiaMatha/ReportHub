@@ -18,6 +18,7 @@ export default function ClientForm({ client, onSave, onClose }: Props) {
     semrushProjectId: client?.semrushProjectId || '',
     clickupListId: client?.clickupListId || '',
     githubRepo: client?.githubRepo || '',
+    sproutProfileId: client?.sproutProfileId || '',
   })
   const [saving, setSaving] = useState(false)
   const [deleting, setDeleting] = useState(false)
@@ -82,6 +83,7 @@ export default function ClientForm({ client, onSave, onClose }: Props) {
               <Field label="SEMrush Project ID" value={form.semrushProjectId} onChange={(v) => setForm(f => ({...f, semrushProjectId: v}))} placeholder="project-id" />
               <Field label="ClickUp List ID" value={form.clickupListId} onChange={(v) => setForm(f => ({...f, clickupListId: v}))} placeholder="901234567" />
               <Field label="GitHub Repo" value={form.githubRepo} onChange={(v) => setForm(f => ({...f, githubRepo: v}))} placeholder="owner/repo" />
+              <Field label="Sprout Social Profile ID" value={form.sproutProfileId} onChange={(v) => setForm(f => ({...f, sproutProfileId: v}))} placeholder="1234567" />
             </div>
           </div>
 
