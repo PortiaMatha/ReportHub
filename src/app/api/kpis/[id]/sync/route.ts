@@ -65,22 +65,14 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       end.setUTCDate(start.getUTCDate() + 6)
       const iso = (d: Date) => d.toISOString().slice(0, 10)
       const data = await fetchSproutWeeklyMetrics(profileIds, iso(start), iso(end))
-
-      if (kpi.metricKey === 'engagementRate' && kpi.measurementType === 'rate') {
-        // Reach-weighted rate — numerator/denominator entangled the same way GA4's bounceRate is.
-        value = data.engagements
-        denominatorValue = data.reach
-      } else {
-        const map: Record<string, number> = {
-          impressions: data.impressions,
-          reach: data.reach,
-          followerGrowth: data.followerGrowth,
-          videoViews: data.videoViews,
-          saves: data.saves,
-          shares: data.shares,
-        }
-        value = map[kpi.metricKey] ?? null
+      const map: Record<string, number> = {
+        impressions: data.impressions,
+        followerGrowth: data.followerGrowth,
+        videoViews: data.videoViews,
+        saves: data.saves,
+        shares: data.shares,
       }
+      value = map[kpi.metricKey] ?? null
     }
   } catch (e) {
     return NextResponse.json({ error: (e as Error).message }, { status: 400 })

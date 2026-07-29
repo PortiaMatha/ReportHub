@@ -29,7 +29,7 @@ export const KPI_PRESETS: Record<KpiSection, KpiPreset[]> = {
     { name: 'AI Visibility', measurementType: 'snapshot', direction: 'higher' },
   ],
   Social: [
-    { name: 'Engagement Rate', unit: '%', measurementType: 'rate', direction: 'higher', denominatorLabel: 'Reach', source: 'sproutsocial', metricKey: 'engagementRate' },
+    { name: 'Engagement Rate', unit: '%', measurementType: 'rate', direction: 'higher', denominatorLabel: 'Reach' },
     { name: 'Follower Growth', measurementType: 'cumulative', direction: 'higher', source: 'sproutsocial', metricKey: 'followerGrowth' },
     { name: 'Impressions', measurementType: 'cumulative', direction: 'higher', source: 'sproutsocial', metricKey: 'impressions' },
     { name: 'Views', measurementType: 'cumulative', direction: 'higher', source: 'sproutsocial', metricKey: 'videoViews' },
@@ -37,8 +37,8 @@ export const KPI_PRESETS: Record<KpiSection, KpiPreset[]> = {
     { name: 'Shares', measurementType: 'cumulative', direction: 'higher', source: 'sproutsocial', metricKey: 'shares' },
   ],
   'Influencer Management': [
-    { name: 'Engagement Rate', unit: '%', measurementType: 'rate', direction: 'higher', denominatorLabel: 'Reach', source: 'sproutsocial', metricKey: 'engagementRate' },
-    { name: 'Reach', measurementType: 'cumulative', direction: 'higher', source: 'sproutsocial', metricKey: 'reach' },
+    { name: 'Engagement Rate', unit: '%', measurementType: 'rate', direction: 'higher', denominatorLabel: 'Reach' },
+    { name: 'Reach', measurementType: 'cumulative', direction: 'higher' },
     { name: 'Impressions', measurementType: 'cumulative', direction: 'higher', source: 'sproutsocial', metricKey: 'impressions' },
     { name: 'Affiliate Driven Revenue', unit: '$', measurementType: 'cumulative', direction: 'higher' },
   ],
