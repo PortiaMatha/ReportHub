@@ -15,7 +15,6 @@ model Client {
   semrushProjectId String?
   clickupListId   String?
   githubRepo      String?
-  color           String    @default("#534AB7")
   ytdStart        DateTime?
   ytdEnd          DateTime?
   createdAt       DateTime  @default(now())

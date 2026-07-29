@@ -116,10 +116,12 @@ function MetricBlock({ icon, name, value, delta }: {
 
 // ─── Client card ─────────────────────────────────────────────────────────────
 
-function FaviconOrDot({ domain, color }: { domain: string; color: string }) {
+const DEFAULT_CLIENT_COLOR = '#534AB7'
+
+function FaviconOrDot({ domain }: { domain: string }) {
   const [failed, setFailed] = useState(false)
   const clean = domain.replace(/^https?:\/\//, '').replace(/\/.*$/, '')
-  if (failed) return <span className="w-5 h-5 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
+  if (failed) return <span className="w-5 h-5 rounded-full flex-shrink-0" style={{ backgroundColor: DEFAULT_CLIENT_COLOR }} />
   return (
     <img src={`https://icons.duckduckgo.com/ip3/${clean}.ico`} alt="" width={20} height={20}
       className="w-5 h-5 rounded-sm object-contain flex-shrink-0"
@@ -161,7 +163,7 @@ function ClientReportCard({ client, history, onClick }: {
       {/* Header */}
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-2.5 min-w-0">
-          <FaviconOrDot domain={client.domain} color={client.color} />
+          <FaviconOrDot domain={client.domain} />
           <div className="min-w-0">
             <div className="text-sm font-semibold text-white truncate group-hover:text-purple-300 transition-colors">
               {client.name}

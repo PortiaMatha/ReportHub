@@ -26,7 +26,6 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       semrushProjectId: body.semrushProjectId,
       clickupListId: body.clickupListId,
       githubRepo: body.githubRepo,
-      color: body.color,
       ytdStart: body.ytdStart !== undefined ? (body.ytdStart ? new Date(body.ytdStart) : null) : undefined,
       ytdEnd: body.ytdEnd !== undefined ? (body.ytdEnd ? new Date(body.ytdEnd) : null) : undefined,
     },

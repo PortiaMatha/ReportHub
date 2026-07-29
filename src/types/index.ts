@@ -18,7 +18,6 @@ export interface Client {
   semrushProjectId?: string
   clickupListId?: string
   githubRepo?: string
-  color: string
   ytdStart?: string | null
   ytdEnd?: string | null
   createdAt: string

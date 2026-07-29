@@ -10,8 +10,6 @@ interface Props {
   onClose: () => void
 }
 
-const COLORS = ['#534AB7', '#1D9E75', '#D85A30', '#378ADD', '#D4537E', '#BA7517', '#3B6D11']
-
 export default function ClientForm({ client, onSave, onClose }: Props) {
   const [form, setForm] = useState({
     name: client?.name || '',
@@ -20,7 +18,6 @@ export default function ClientForm({ client, onSave, onClose }: Props) {
     semrushProjectId: client?.semrushProjectId || '',
     clickupListId: client?.clickupListId || '',
     githubRepo: client?.githubRepo || '',
-    color: client?.color || COLORS[0],
   })
   const [saving, setSaving] = useState(false)
   const [deleting, setDeleting] = useState(false)
@@ -85,20 +82,6 @@ export default function ClientForm({ client, onSave, onClose }: Props) {
               <Field label="SEMrush Project ID" value={form.semrushProjectId} onChange={(v) => setForm(f => ({...f, semrushProjectId: v}))} placeholder="project-id" />
               <Field label="ClickUp List ID" value={form.clickupListId} onChange={(v) => setForm(f => ({...f, clickupListId: v}))} placeholder="901234567" />
               <Field label="GitHub Repo" value={form.githubRepo} onChange={(v) => setForm(f => ({...f, githubRepo: v}))} placeholder="owner/repo" />
-            </div>
-          </div>
-
-          <div>
-            <div className="text-xs font-medium text-slate-500 mb-2">Colour</div>
-            <div className="flex gap-2">
-              {COLORS.map(c => (
-                <button
-                  key={c}
-                  onClick={() => setForm(f => ({...f, color: c}))}
-                  className={`w-7 h-7 rounded-full border-2 transition-all ${form.color === c ? 'border-white scale-110' : 'border-transparent opacity-70 hover:opacity-100'}`}
-                  style={{ backgroundColor: c }}
-                />
-              ))}
             </div>
           </div>
 

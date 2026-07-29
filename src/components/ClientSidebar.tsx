@@ -7,11 +7,13 @@ import type { Client } from '@/types'
 import type { ActiveView } from '@/app/page'
 import Logo from './Logo'
 
-function FaviconOrDot({ domain, color }: { domain: string; color: string }) {
+const DEFAULT_CLIENT_COLOR = '#534AB7'
+
+function FaviconOrDot({ domain }: { domain: string }) {
   const [failed, setFailed] = useState(false)
   const clean = domain.replace(/^https?:\/\//, '').replace(/\/.*$/, '')
   if (failed) {
-    return <span className="w-3.5 h-3.5 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
+    return <span className="w-3.5 h-3.5 rounded-full flex-shrink-0" style={{ backgroundColor: DEFAULT_CLIENT_COLOR }} />
   }
   return (
     <img
@@ -121,7 +123,7 @@ export default function ClientSidebar({
                       : 'text-slate-400 hover:text-white hover:bg-white/5'
                   }`}
                 >
-                  <FaviconOrDot domain={client.domain} color={client.color} />
+                  <FaviconOrDot domain={client.domain} />
                   <span className="flex-1 text-left truncate">{client.name}</span>
                   <div
                     role="button"

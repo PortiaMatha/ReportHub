@@ -35,7 +35,6 @@ export async function POST(req: NextRequest) {
       semrushProjectId: body.semrushProjectId || null,
       clickupListId: body.clickupListId || null,
       githubRepo: body.githubRepo || null,
-      color: body.color || '#534AB7',
     },
   })
   return NextResponse.json(client, { status: 201 })

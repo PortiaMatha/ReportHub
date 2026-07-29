@@ -10,11 +10,13 @@ interface Props {
   onEditClient: (c: Client) => void
 }
 
-function FaviconOrDot({ domain, color }: { domain: string; color: string }) {
+const DEFAULT_CLIENT_COLOR = '#534AB7'
+
+function FaviconOrDot({ domain }: { domain: string }) {
   const [failed, setFailed] = useState(false)
   const clean = domain.replace(/^https?:\/\//, '').replace(/\/.*$/, '')
   if (failed) {
-    return <span className="w-5 h-5 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
+    return <span className="w-5 h-5 rounded-full flex-shrink-0" style={{ backgroundColor: DEFAULT_CLIENT_COLOR }} />
   }
   return (
     <img
@@ -170,7 +172,7 @@ export default function IntegrationsView({ clients, loading, onEditClient }: Pro
                       key={client.id}
                       className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-white/[0.04] group transition-colors"
                     >
-                      <FaviconOrDot domain={client.domain} color={client.color} />
+                      <FaviconOrDot domain={client.domain} />
                       <div className="flex-1 min-w-0">
                         <div className="text-sm text-white font-medium truncate">{client.name}</div>
                         {detail && (
@@ -193,7 +195,7 @@ export default function IntegrationsView({ clients, loading, onEditClient }: Pro
                     key={client.id}
                     className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-white/[0.04] group transition-colors opacity-50"
                   >
-                    <FaviconOrDot domain={client.domain} color={client.color} />
+                    <FaviconOrDot domain={client.domain} />
                     <div className="flex-1 min-w-0">
                       <div className="text-sm text-slate-400 truncate">{client.name}</div>
                       <div className="text-[11px] text-slate-600 truncate">Not configured</div>

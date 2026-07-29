@@ -12,13 +12,15 @@ interface Props {
   onAddClient: () => void
 }
 
-function FaviconOrGlobe({ domain, color }: { domain: string; color: string }) {
+const DEFAULT_CLIENT_COLOR = '#534AB7'
+
+function FaviconOrGlobe({ domain }: { domain: string }) {
   const [failed, setFailed] = useState(false)
   const clean = domain.replace(/^https?:\/\//, '').replace(/\/.*$/, '')
   if (failed) {
     return (
-      <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: color + '22' }}>
-        <Globe className="w-5 h-5" style={{ color }} />
+      <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: DEFAULT_CLIENT_COLOR + '22' }}>
+        <Globe className="w-5 h-5" style={{ color: DEFAULT_CLIENT_COLOR }} />
       </div>
     )
   }
@@ -105,7 +107,7 @@ export default function ClientsView({ clients, loading, onEditClient, onSelectCl
               >
                 <div className="flex items-start gap-4">
                   {/* Favicon / icon */}
-                  <FaviconOrGlobe domain={client.domain} color={client.color} />
+                  <FaviconOrGlobe domain={client.domain} />
 
                   {/* Client info + stats */}
                   <div className="flex-1 min-w-0">
