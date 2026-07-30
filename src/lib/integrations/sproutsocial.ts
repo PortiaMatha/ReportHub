@@ -15,8 +15,9 @@ interface SproutProfileRow {
 }
 
 // Sums metrics across every profile passed in — combining multiple platforms (Facebook, Instagram,
-// LinkedIn, etc.) into one figure per client, rather than reporting on a single channel.
-export async function fetchSproutWeeklyMetrics(profileIds: string[], startDate: string, endDate: string) {
+// LinkedIn, etc.) into one figure per client, rather than reporting on a single channel. Works for
+// any date range (a week for KPI syncs, a full month for the monthly report).
+export async function fetchSproutMetrics(profileIds: string[], startDate: string, endDate: string) {
   const customerId = process.env.SPROUT_CUSTOMER_ID
   const token = process.env.SPROUT_API_TOKEN
   if (!customerId || !token) throw new Error('Sprout Social is not configured')
@@ -44,5 +45,36 @@ export async function fetchSproutWeeklyMetrics(profileIds: string[], startDate: 
     videoViews: sum('video_views'),
     saves: sum('saves'),
     shares: sum('shares'),
+  }
+}
+
+function monthRange(month: number, year: number) {
+  const start = new Date(Date.UTC(year, month - 1, 1))
+  const end = new Date(Date.UTC(year, month, 0))
+  return { start: start.toISOString().slice(0, 10), end: end.toISOString().slice(0, 10) }
+}
+
+// Current month totals plus month-over-month deltas, for the monthly report / AI summary.
+export async function fetchSproutMonthlyData(profileIds: string[], month: number, year: number) {
+  const current = monthRange(month, year)
+  const prevDate = new Date(Date.UTC(year, month - 2, 1))
+  const previous = monthRange(prevDate.getUTCMonth() + 1, prevDate.getUTCFullYear())
+
+  const [curData, prevData] = await Promise.all([
+    fetchSproutMetrics(profileIds, current.start, current.end),
+    fetchSproutMetrics(profileIds, previous.start, previous.end),
+  ])
+
+  const delta = (cur: number, prev: number) => (prev === 0 ? 0 : Math.round(((cur - prev) / prev) * 1000) / 10)
+
+  return {
+    sproutImpressions: curData.impressions,
+    sproutImpressionsDelta: delta(curData.impressions, prevData.impressions),
+    sproutEngagements: curData.engagements,
+    sproutEngagementsDelta: delta(curData.engagements, prevData.engagements),
+    sproutFollowerGrowth: curData.followerGrowth,
+    sproutVideoViews: curData.videoViews,
+    sproutSaves: curData.saves,
+    sproutShares: curData.shares,
   }
 }

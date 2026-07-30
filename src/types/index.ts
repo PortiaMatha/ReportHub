@@ -261,6 +261,16 @@ export interface ReportData {
   tasks?: Task[]
   clickupStatusBreakdown?: ClickUpStatus[]
 
+  // Sprout Social
+  sproutImpressions?: number
+  sproutImpressionsDelta?: number
+  sproutEngagements?: number
+  sproutEngagementsDelta?: number
+  sproutFollowerGrowth?: number
+  sproutVideoViews?: number
+  sproutSaves?: number
+  sproutShares?: number
+
   // GitHub
   githubBranch?: string
   githubLastCommit?: string

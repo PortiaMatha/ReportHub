@@ -143,6 +143,16 @@ model Report {
   tasks                    String?   // JSON array
   clickupStatusBreakdown   String?   // JSON array
 
+  // Sprout Social
+  sproutImpressions       Int?
+  sproutImpressionsDelta  Float?
+  sproutEngagements       Int?
+  sproutEngagementsDelta  Float?
+  sproutFollowerGrowth    Int?
+  sproutVideoViews        Int?
+  sproutSaves             Int?
+  sproutShares            Int?
+
   // GitHub
   githubBranch            String?
   githubLastCommit        String?

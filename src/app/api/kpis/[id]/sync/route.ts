@@ -4,7 +4,7 @@ import { fetchGA4WeeklyMetrics } from '@/lib/integrations/ga4'
 import { fetchSEMrushData } from '@/lib/integrations/semrush'
 import { fetchPageSpeedData } from '@/lib/integrations/pagespeed'
 import { fetchClickUpTasks } from '@/lib/integrations/clickup'
-import { fetchSproutWeeklyMetrics } from '@/lib/integrations/sproutsocial'
+import { fetchSproutMetrics } from '@/lib/integrations/sproutsocial'
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -64,7 +64,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       const end = new Date(start)
       end.setUTCDate(start.getUTCDate() + 6)
       const iso = (d: Date) => d.toISOString().slice(0, 10)
-      const data = await fetchSproutWeeklyMetrics(profileIds, iso(start), iso(end))
+      const data = await fetchSproutMetrics(profileIds, iso(start), iso(end))
       const map: Record<string, number> = {
         impressions: data.impressions,
         followerGrowth: data.followerGrowth,

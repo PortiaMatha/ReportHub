@@ -20,6 +20,18 @@ ${Array.isArray(report.githubCommits) && report.githubCommits.length > 0
 `
     : ''
 
+  const sproutSection = report.sproutImpressions != null
+    ? `
+### Sprout Social (combined across all connected platforms)
+- Impressions: ${report.sproutImpressions.toLocaleString()} (${report.sproutImpressionsDelta !== undefined ? (report.sproutImpressionsDelta > 0 ? '+' : '') + report.sproutImpressionsDelta + '%' : 'N/A'} vs last month)
+- Engagements: ${report.sproutEngagements?.toLocaleString() ?? 'N/A'} (${report.sproutEngagementsDelta !== undefined ? (report.sproutEngagementsDelta > 0 ? '+' : '') + report.sproutEngagementsDelta + '%' : 'N/A'})
+- Net Follower Growth: ${report.sproutFollowerGrowth?.toLocaleString() ?? 'N/A'}
+- Video Views: ${report.sproutVideoViews?.toLocaleString() ?? 'N/A'}
+- Saves: ${report.sproutSaves?.toLocaleString() ?? 'N/A'}
+- Shares: ${report.sproutShares?.toLocaleString() ?? 'N/A'}
+`
+    : ''
+
   const prompt = `You are a senior digital marketing analyst writing a monthly performance summary for a client report.
 
 Client: ${clientName}
@@ -55,13 +67,13 @@ Period: ${monthName} ${report.year}
 - Open: ${report.openTasks || 0}
 - In Progress: ${report.inProgressTasks || 0}
 - Completed: ${report.completedTasks || 0}
-${githubSection}
+${sproutSection}${githubSection}
 ### Domain Changes vs Last Month
 ${report.domainChanges?.length ? report.domainChanges.map(c => `- ${c.label}: ${c.previous} → ${c.current}`).join('\n') : '- No changes detected'}
 
 ---
 
-Write a professional monthly summary (3-4 paragraphs) covering: overall performance, what improved, what needs attention, and traffic trends. Be specific with numbers. Write for a non-technical client.${githubSection ? ' Where relevant, reference specific code changes (commits) that explain performance shifts — e.g. if performance improved, mention the work done by the team.' : ''}
+Write a professional monthly summary (3-4 paragraphs) covering: overall performance, what improved, what needs attention, and traffic trends. Be specific with numbers. Write for a non-technical client.${sproutSection ? ' In the traffic trends / outlook paragraph, fold in the Sprout Social findings alongside the website traffic trend — discuss impressions, engagement, and follower growth as part of the same growth-trajectory narrative, not as a separate afterthought.' : ''}${githubSection ? ' Where relevant, reference specific code changes (commits) that explain performance shifts — e.g. if performance improved, mention the work done by the team.' : ''}
 
 Then provide exactly 4-6 prioritised recommendations as a JSON array at the end in this exact format:
 <recommendations>

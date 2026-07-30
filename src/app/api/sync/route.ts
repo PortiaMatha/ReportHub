@@ -4,6 +4,7 @@ import { fetchGA4Data } from '@/lib/integrations/ga4'
 import { fetchPageSpeedData } from '@/lib/integrations/pagespeed'
 import { fetchSEMrushData } from '@/lib/integrations/semrush'
 import { fetchClickUpTasks } from '@/lib/integrations/clickup'
+import { fetchSproutMonthlyData } from '@/lib/integrations/sproutsocial'
 import { crawlDomain, diffDomainSnapshots } from '@/lib/integrations/domain'
 import { fetchGitHubData } from '@/lib/integrations/github'
 import { generateAISummary } from '@/lib/ai-summary'
@@ -53,6 +54,16 @@ export async function POST(req: NextRequest) {
       fetchClickUpTasks(client.clickupListId)
         .then((data) => { Object.assign(reportData, data); results.clickup = { success: true } })
         .catch((e) => { results.clickup = { success: false, error: e.message } })
+    )
+  }
+
+  // Sprout Social
+  const sproutProfileIds: string[] = client.sproutProfileIds ? JSON.parse(client.sproutProfileIds) : []
+  if ((!sources || sources.includes('sproutsocial')) && sproutProfileIds.length > 0) {
+    tasks.push(
+      fetchSproutMonthlyData(sproutProfileIds, month, year)
+        .then((data) => { Object.assign(reportData, data); results.sproutsocial = { success: true } })
+        .catch((e) => { results.sproutsocial = { success: false, error: e.message } })
     )
   }
 
@@ -180,6 +191,14 @@ function serializeReport(data: Record<string, unknown>) {
     inProgressTasks: data.inProgressTasks as number,
     tasks: data.tasks ? JSON.stringify(data.tasks) : null,
     clickupStatusBreakdown: data.clickupStatusBreakdown ? JSON.stringify(data.clickupStatusBreakdown) : null,
+    sproutImpressions: data.sproutImpressions as number,
+    sproutImpressionsDelta: data.sproutImpressionsDelta as number,
+    sproutEngagements: data.sproutEngagements as number,
+    sproutEngagementsDelta: data.sproutEngagementsDelta as number,
+    sproutFollowerGrowth: data.sproutFollowerGrowth as number,
+    sproutVideoViews: data.sproutVideoViews as number,
+    sproutSaves: data.sproutSaves as number,
+    sproutShares: data.sproutShares as number,
     githubBranch: data.githubBranch as string,
     githubLastCommit: data.githubLastCommit as string,
     githubLastCommitMsg: data.githubLastCommitMsg as string,
