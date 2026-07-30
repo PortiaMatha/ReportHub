@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import React from 'react'
 import type { Client, ReportData } from '@/types'
-import { BarChart2, Zap, Search, CheckSquare, ArrowUp, ArrowDown, FileText } from 'lucide-react'
+import { BarChart2, Zap, Search, CheckSquare, ArrowUp, ArrowDown, FileText, Share2 } from 'lucide-react'
 
 interface Props {
   clients: Client[]
@@ -145,6 +145,7 @@ function ClientReportCard({ client, history, onClick }: {
   const ga4Values = series.map(r => r.sessions ?? 0)
   const speedValues = series.map(r => r.desktopPerf ?? 0)
   const semValues = series.map(r => r.siteHealth ?? 0)
+  const sproutValues = series.map(r => r.sproutImpressions ?? 0)
 
   const ga4Current = latest?.sessions
     ? latest.sessions >= 1000 ? `${(latest.sessions / 1000).toFixed(1)}K` : String(latest.sessions)
@@ -152,6 +153,10 @@ function ClientReportCard({ client, history, onClick }: {
   const speedCurrent = latest?.desktopPerf ? String(latest.desktopPerf) : '—'
   const semCurrent = latest?.siteHealth ? `${latest.siteHealth}%` : '—'
   const tasksCurrent = latest?.openTasks != null ? String(latest.openTasks) : '—'
+  const hasSprout = latest?.sproutImpressions != null
+  const sproutCurrent = latest?.sproutImpressions
+    ? latest.sproutImpressions >= 1000 ? `${(latest.sproutImpressions / 1000).toFixed(1)}K` : String(latest.sproutImpressions)
+    : '—'
 
   const cid = client.id.replace(/[^a-z0-9]/gi, '')
 
@@ -210,6 +215,19 @@ function ClientReportCard({ client, history, onClick }: {
               trackLabel="SEMrush"
               currentValue={semCurrent}
             />
+            {hasSprout && (
+              <>
+                <div className="w-px bg-white/[0.05] flex-shrink-0" />
+                <SparkChart
+                  id={`${cid}-sprout`}
+                  values={sproutValues}
+                  labels={labels}
+                  color="#f472b6"
+                  trackLabel="Sprout Social"
+                  currentValue={sproutCurrent}
+                />
+              </>
+            )}
           </div>
 
           {/* Metric row */}
@@ -218,6 +236,9 @@ function ClientReportCard({ client, history, onClick }: {
             <MetricBlock icon={<Zap className="w-2.5 h-2.5" />} name="Desktop" value={speedCurrent} />
             <MetricBlock icon={<Search className="w-2.5 h-2.5" />} name="Health" value={semCurrent} />
             <MetricBlock icon={<CheckSquare className="w-2.5 h-2.5" />} name="Tasks" value={tasksCurrent} />
+            {hasSprout && (
+              <MetricBlock icon={<Share2 className="w-2.5 h-2.5" />} name="Impressions" value={sproutCurrent} delta={latest?.sproutImpressionsDelta} />
+            )}
           </div>
         </>
       ) : (

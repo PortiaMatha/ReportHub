@@ -5,7 +5,7 @@ import React from 'react'
 import {
   RefreshCw, Download, Sparkles, ArrowUp, ArrowDown, ExternalLink,
   CheckCircle, AlertTriangle, BarChart2, Zap, Search, CheckSquare,
-  GitBranch, GitMerge, GitPullRequest, Star, AlertCircle, User,
+  GitBranch, GitMerge, GitPullRequest, Star, AlertCircle, User, Share2,
 } from 'lucide-react'
 import type { Client, ReportData, AIRecommendation, TaskAssignee, GitHubRelease, GitHubCommit, ClickUpStatus, DailySession, CruxData, PageSpeedIssue } from '@/types'
 import KpiView from './KpiView'
@@ -236,13 +236,18 @@ export default function ReportView({ client }: { client: Client }) {
 
 function OverviewTab({ report }: { report: ReportData }) {
   const hasGitHub = report.githubCommitsThisMonth != null || !!report.githubBranch
+  const hasSprout = report.sproutImpressions != null
+  const cardCount = 4 + (hasGitHub ? 1 : 0) + (hasSprout ? 1 : 0)
   return (
     <div className="space-y-5">
-      <div className={`grid gap-3 ${hasGitHub ? 'grid-cols-5' : 'grid-cols-4'}`}>
+      <div className={`grid gap-3 ${cardCount === 6 ? 'grid-cols-6' : cardCount === 5 ? 'grid-cols-5' : 'grid-cols-4'}`}>
         <SourceCard icon={<BarChart2 className="w-4 h-4" />} name="GA4" value={report.sessions ? (report.sessions >= 1000 ? `${(report.sessions / 1000).toFixed(0)}K` : String(report.sessions)) : '—'} label="Sessions" delta={report.sessionsDelta} ok={!!report.sessions} />
         <SourceCard icon={<Zap className="w-4 h-4" />} name="PageSpeed" value={report.desktopPerf ? String(report.desktopPerf) : '—'} label="Desktop perf" ok={!!report.desktopPerf} />
         <SourceCard icon={<Search className="w-4 h-4" />} name="SEMrush" value={report.siteHealth ? `${report.siteHealth}%` : '—'} label="Site health" ok={!!(report.siteHealth || report.organicKeywords)} />
         <SourceCard icon={<CheckSquare className="w-4 h-4" />} name="ClickUp" value={report.openTasks !== undefined ? String(report.openTasks) : '—'} label="Open tasks" ok={report.openTasks !== undefined} />
+        {hasSprout && (
+          <SourceCard icon={<Share2 className="w-4 h-4" />} name="Sprout Social" value={report.sproutImpressions! >= 1000 ? `${(report.sproutImpressions! / 1000).toFixed(0)}K` : String(report.sproutImpressions)} label="Impressions" delta={report.sproutImpressionsDelta} ok={hasSprout} />
+        )}
         {hasGitHub && (
           <SourceCard icon={<GitBranch className="w-4 h-4" />} name="GitHub" value={report.githubCommitsThisMonth !== undefined ? String(report.githubCommitsThisMonth) : '—'} label="Commits" ok={hasGitHub} />
         )}
@@ -251,6 +256,7 @@ function OverviewTab({ report }: { report: ReportData }) {
         <div className="space-y-4">
           <GA4Card report={report} />
           <SEMrushCard report={report} />
+          {hasSprout && <SproutCard report={report} />}
         </div>
         <div className="space-y-4">
           <PageSpeedCard report={report} />
@@ -937,6 +943,21 @@ function ClickUpCard({ report }: { report: ReportData }) {
           ))}
         </div>
       ) : null}
+    </Card>
+  )
+}
+
+function SproutCard({ report }: { report: ReportData }) {
+  return (
+    <Card title="Sprout Social" icon={<Share2 className="w-3.5 h-3.5" />}>
+      <div className="space-y-3">
+        <DataRow label="Impressions" value={report.sproutImpressions?.toLocaleString()} delta={report.sproutImpressionsDelta} />
+        <DataRow label="Engagements" value={report.sproutEngagements?.toLocaleString()} delta={report.sproutEngagementsDelta} />
+        <DataRow label="Net follower growth" value={report.sproutFollowerGrowth?.toLocaleString()} />
+        <DataRow label="Video views" value={report.sproutVideoViews?.toLocaleString()} />
+        <DataRow label="Saves" value={report.sproutSaves?.toLocaleString()} />
+        <DataRow label="Shares" value={report.sproutShares?.toLocaleString()} />
+      </div>
     </Card>
   )
 }
